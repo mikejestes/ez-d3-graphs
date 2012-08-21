@@ -42,33 +42,94 @@
         return result;
     };
 
-    expose.comboGraph = function (el, width, height, graphs, options) {
+    expose.ComboGraph = function (el, width, height, options) {
 
         var defaults = {
                 topGutter: 10,
-                leftGutter: 45,
-                rightGutter: 60,
-                bottomGutter: 20
-            },
-            i,
-            svg = d3.select(el).append("svg")
-                .attr("width", width + 'px')
-                .attr("height", height + 'px');
+                leftGutter: 0,
+                rightGutter: 0,
+                bottomGutter: 5
+            };
 
-        options = extend(defaults, options);
+        this.el = el;
+        this.options = extend(defaults, options);
+        this.width = width;
+        this.height = height;
+        this.graphs = [];
+        this.leftAxis = null;
+        this.rightAxis = null;
+        this.bottomAxis = null;
 
-        for (i = 0; i < graphs.length; i++) {
-            graphs[i].render(svg, {
-                width: width,
-                height: height,
-                topGutter: options.topGutter,
-                rightGutter: options.rightGutter,
-                bottomGutter: options.bottomGutter,
-                leftGutter: options.leftGutter
-            });
+    };
+    expose.ComboGraph.prototype = {
+        render: function() {
+
+            var svg = d3.select(this.el).append("svg")
+                .attr("width", this.width + 'px')
+                .attr("height", this.height + 'px');
+
+            if (this.leftAxis) {
+                this.graphs.push(this.leftAxis);
+                this.options.leftGutter += 45;
+            }
+            if (this.rightAxis) {
+                this.graphs.push(this.rightAxis);
+                this.options.rightGutter += 60;
+            }
+            if (this.bottomAxis) {
+                this.graphs.push(this.bottomAxis);
+                this.options.bottomGutter += 20;
+            }
+
+            for (i = 0; i < this.graphs.length; i++) {
+                this.graphs[i].render(svg, {
+                    width: this.width,
+                    height: this.height,
+                    topGutter: this.options.topGutter,
+                    rightGutter: this.options.rightGutter,
+                    bottomGutter: this.options.bottomGutter,
+                    leftGutter: this.options.leftGutter
+                });
+            }
+
+            return svg;
+
+        },
+        add: function (graph) {
+            var axisOptions = {
+                    position: 'left',
+                    ticks: this.height / 25
+                };
+
+            this.graphs.push(graph);
+
+            if (!this.leftAxis) {
+                axisOptions.label = graph.options.label;
+                this.leftAxis = new expose.GraphAxis(0, d3.max(graph.data), axisOptions);
+            } else if (!this.rightAxis) {
+                axisOptions.position = 'right';
+                axisOptions.label = graph.options.label;
+                this.rightAxis = new expose.GraphAxis(0, d3.max(graph.data), axisOptions);
+            }
+
+            return this;
+        },
+        setLeftAxis: function (axis) {
+            this.leftAxis = axis;
+            return this;
+        },
+        setRightAxis: function (axis) {
+            this.rightAxis = axis;
+            return this;
+        },
+        setBottomAxis: function (axis) {
+            this.bottomAxis = axis;
+            return this;
+        },
+        setOption: function(key, value) {
+            this.options[key] = value;
+            return this;
         }
-
-        return svg;
     };
 
     expose.BarGraph = function (data, options) {
@@ -195,7 +256,9 @@
             label: null,
             labelColor: '#000',
             ticks: null,
-            scale: 'linear'
+            scale: 'linear',
+            style: 'fill: none; stroke: black; shape-rendering: crispEdges;',
+            labelStyle: 'font-family: sans-serif; font-size: 12px'
         };
 
         this.min = min;
@@ -210,7 +273,8 @@
                 translateX = 0,
                 translateY = 0,
                 translateLabelX = 0,
-                fontSizeDivisor = 10;
+                fontSizeDivisor = 10,
+                axisSng;
 
             if (this.options.type === 'date') {
                 axisScale = d3.time.scale().domain([this.min, this.max]).range([props.leftGutter, props.width - props.rightGutter]);
@@ -226,25 +290,25 @@
 
             if (this.options.position === 'left') {
                 translateX = props.leftGutter;
-                translateLabelX = 15 + props.height / 60;
+                translateLabelX = -30 + props.height / 60;
             } else if (this.options.position === 'right') {
                 translateX = props.width - props.rightGutter;
-                translateLabelX = props.width - 5;
+                translateLabelX = 55;
             } else if (this.options.position === 'bottom') {
                 translateX = 0;
                 translateY = props.height - props.bottomGutter;
             }
 
-            svg.append('g')
+            svg.append('defs').append('style').text('.axis path, .axis line {' + this.options.style + '} .axis text {' + this.options.labelStyle + '}');
+
+            axisSvg = svg.append('g')
                 .attr('class', 'axis')
                 .attr('transform', 'translate(' + translateX + ', ' + translateY + ')')
                 .call(axis);
 
             if (this.options.label) {
-                svg.append('text')
+                axisSvg.append('text')
                     .text(this.options.label)
-                    // .attr('class', 'label')
-                    .attr('style', 'font-size: ' + props.height / fontSizeDivisor + 'px')
                     .attr('fill', this.options.labelColor)
                     .attr('transform', 'translate(' + translateLabelX + ',' + (props.height - 20) + ')rotate(270)');
             }
