@@ -2,40 +2,40 @@
 (function() {
 
     var graphWidth = 800,
-        graphHeight = 250,
+        graphHeight = 200,
         relativeTicks = graphHeight / 30,
         dateTicks = graphWidth / 120;
 
-    $.getJSON('../data/orders.json', function(data) {
+    d3.json('../data/orders.json', function(data) {
 
-        var orders = pluck(data, 'orders'),
-            sales = pluck(data, 'sales'),
+        var orders = ezD3Graphs.pluck(data, 'orders'),
+            sales = ezD3Graphs.pluck(data, 'sales'),
             startDate = new Date(new Date().getTime() - orders.length * 86400 * 1000);
 
-        var leftAxis = new GraphAxis(0, getMaxValue(orders), {
+        var leftAxis = new ezD3Graphs.GraphAxis(0, d3.max(orders), {
             position: 'left',
             label: 'Daily orders',
             ticks: relativeTicks
-        }), ordersGraph = new BarGraph(orders, {
+        }), ordersGraph = new ezD3Graphs.BarGraph(orders, {
             color: 'lightblue'
-        }), salesGraph = new LineGraph(sales, {
+        }), salesGraph = new ezD3Graphs.LineGraph(sales, {
             color: 'darkgreen'
-        }), rightAxis = new GraphAxis(0, getMaxValue(sales), {
+        }), rightAxis = new ezD3Graphs.GraphAxis(0, d3.max(sales), {
             position: 'right',
             color: 'darkgreen',
             label: 'Daily PW Revenue',
             ticks: relativeTicks,
             tickFormat: function(d) { return '$' + d; }
-        }), dateAxis = new GraphAxis(startDate, new Date(), {
+        }), dateAxis = new ezD3Graphs.GraphAxis(startDate, new Date(), {
             position: 'bottom',
             type: 'date',
             ticks: dateTicks
         });
 
-        comboGraph('#orders', graphWidth, graphHeight, [ordersGraph, leftAxis, salesGraph, rightAxis, dateAxis]);
+        ezD3Graphs.comboGraph('#orders', graphWidth, graphHeight, [ordersGraph, leftAxis, salesGraph, rightAxis, dateAxis]);
     });
 
-    $.getJSON('../data/transactions.json', function(data) {
+    d3.json('../data/transactions.json', function(data) {
 
         var startDate = new Date(new Date().getTime() - data.length * 86400 * 1000),
             fields = {
@@ -45,20 +45,20 @@
                 completed: 'green'
             };
 
-        var leftAxis = new GraphAxis(0, crawlMax(data), {
+        var leftAxis = new ezD3Graphs.GraphAxis(0, ezD3Graphs.crawlMax(data), {
             position: 'left',
             label: 'Offer Actions',
             ticks: relativeTicks
-        }), graph = new StackedBarGraph(data, {
+        }), graph = new ezD3Graphs.StackedBarGraph(data, {
             color: 'lightblue',
             fields: fields
-        }), dateAxis = new GraphAxis(startDate, new Date(), {
+        }), dateAxis = new ezD3Graphs.GraphAxis(startDate, new Date(), {
             position: 'bottom',
             type: 'date',
             ticks: dateTicks
         });
 
-        var svg = comboGraph('#transactions', graphWidth, graphHeight, [graph, leftAxis, dateAxis]);
+        var svg = ezD3Graphs.comboGraph('#transactions', graphWidth, graphHeight, [graph, leftAxis, dateAxis]);
 
         // should be a legend helper
         var y = 70;
@@ -76,16 +76,16 @@
 
     });
 
-    $.getJSON('../data/duration.json', function(data) {
+    d3.json('../data/duration.json', function(data) {
 
         var startDate = new Date(new Date().getTime() - data.length * 86400 * 1000);
 
-        var leftAxis = new GraphAxis(0, getMaxValue(pluck(data, 'close')), {
+        var leftAxis = new ezD3Graphs.GraphAxis(0, d3.max(ezD3Graphs.pluck(data, 'close')), {
             position: 'left',
             label: 'Offer Amount',
             ticks: relativeTicks,
             tickFormat: function(d) { return '$' + d; }
-        }), graph = new TimeValueGraph(data, {
+        }), graph = new ezD3Graphs.TimeValueGraph(data, {
             color: 'blue',
             y: 'open',
             y2: 'close',
@@ -93,13 +93,13 @@
             width: 'duration',
             tickHeight: 6,
             opacity: 0.9,
-        }), dateAxis = new GraphAxis(startDate, new Date(), {
+        }), dateAxis = new ezD3Graphs.GraphAxis(startDate, new Date(), {
             position: 'bottom',
             type: 'date',
             ticks: dateTicks
         });
 
-        var svg = comboGraph('#duration', graphWidth, graphHeight, [graph, leftAxis, dateAxis], {
+        var svg = ezD3Graphs.comboGraph('#duration', graphWidth, graphHeight, [graph, leftAxis, dateAxis], {
             leftGutter: 70
         });
 
