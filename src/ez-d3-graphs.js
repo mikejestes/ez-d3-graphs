@@ -111,6 +111,9 @@
                 axisOptions.label = graph.options.label;
                 this.rightAxis = new expose.GraphAxis(0, d3.max(graph.data), axisOptions);
             }
+            if (!this.bottomAxis) {
+                this.bottomAxis = new expose.LineAxis({position: 'bottom'});
+            }
 
             return this;
         },
@@ -274,7 +277,7 @@
                 translateY = 0,
                 translateLabelX = 0,
                 fontSizeDivisor = 10,
-                axisSng;
+                axisSvg;
 
             if (this.options.type === 'date') {
                 axisScale = d3.time.scale().domain([this.min, this.max]).range([props.leftGutter, props.width - props.rightGutter]);
@@ -287,6 +290,9 @@
             if (this.options.ticks) {
                 axis.ticks(this.options.ticks);
             }
+            if (this.options.tickValues) {
+                axis.tickValues(this.options.tickValues);
+            }
 
             if (this.options.position === 'left') {
                 translateX = props.leftGutter;
@@ -297,6 +303,11 @@
             } else if (this.options.position === 'bottom') {
                 translateX = 0;
                 translateY = props.height - props.bottomGutter;
+            }
+
+            if (this.options.position === 'bottom' && this.options.type !== 'date') {
+                axisScale = d3.scale.linear().domain([this.min, this.max]).range([props.leftGutter, props.width - props.rightGutter]);
+                axis = d3.svg.axis().scale(axisScale).orient('bottom');                
             }
 
             svg.append('defs').append('style').text('.axis path, .axis line {' + this.options.style + '} .axis text {' + this.options.labelStyle + '}');
@@ -312,6 +323,43 @@
                     .attr('fill', this.options.labelColor)
                     .attr('transform', 'translate(' + translateLabelX + ',' + (props.height - 20) + ')rotate(270)');
             }
+
+        }
+    };
+
+
+    expose.LineAxis = function (options) {
+        var defaults = {
+            position: 'left'
+        };
+
+        this.options = extend(defaults, options);
+    };
+    expose.LineAxis.prototype = {
+        render: function (svg, props) {
+
+            var x1 = props.leftGutter,
+                y1 = props.topGutter, 
+                x2 = props.width - props.rightGutter,
+                y2 = props.height - props.bottomGutter,
+                axisSvg;
+
+            if (this.options.position === 'left') {
+                x2 = x1;
+            } else if (this.options.position === 'right') {
+                x1 = x2;
+            } else if (this.options.position === 'bottom') {
+                y1 = y2 = props.height - props.bottomGutter;
+            }
+
+            axisSvg = svg.append('g')
+                .attr('class', 'axis');
+
+            axisSvg.append('line')
+                .attr('x1', x1)
+                .attr('y1', y1)
+                .attr('x2', x2)
+                .attr('y2', y2);
 
         }
     };
