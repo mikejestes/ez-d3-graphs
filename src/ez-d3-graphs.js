@@ -42,6 +42,27 @@
         return result;
     };
 
+    BaseGraph = function() {};
+    BaseGraph.prototype = {
+        maxYValue: function(data) {
+            if (this.options.yValue === null) {
+                return d3.max(data);
+            } else {
+                return d3.max(expose.pluck(data, this.options.yValue));
+            }
+        },
+        applyYScale: function(scale) {
+            var self = this;
+            return function(item) {
+                if (self.options.yValue === null) {
+                    return scale(item);
+                } else {
+                    return scale(item[self.options.yValue]);
+                }
+            };
+        }
+    };
+
     expose.ComboGraph = function (el, width, height, options) {
 
         var defaults = {
@@ -105,11 +126,11 @@
 
             if (!this.leftAxis) {
                 axisOptions.label = graph.options.label;
-                this.leftAxis = new expose.GraphAxis(0, d3.max(graph.data), axisOptions);
+                this.leftAxis = new expose.GraphAxis(0, graph.maxYValue(graph.data), axisOptions);
             } else if (!this.rightAxis) {
                 axisOptions.position = 'right';
                 axisOptions.label = graph.options.label;
-                this.rightAxis = new expose.GraphAxis(0, d3.max(graph.data), axisOptions);
+                this.rightAxis = new expose.GraphAxis(0, graph.maxYValue(graph.data), axisOptions);
             }
             if (!this.bottomAxis) {
                 this.bottomAxis = new expose.LineAxis({position: 'bottom'});
@@ -137,18 +158,19 @@
 
     expose.BarGraph = function (data, options) {
         var defaults = {
-            color: '#000'
+            color: '#000',
+            yValue: null
         };
 
         this.data = data;
         this.options = extend(defaults, options);
     };
-    expose.BarGraph.prototype = {
+    expose.BarGraph.prototype = extend(new BaseGraph(), {
         render: function (svg, props) {
 
             var barSeparation = 1,
                 barWidth = -barSeparation + (props.width - props.leftGutter - props.rightGutter) / this.data.length,
-                dataMax = d3.max(this.data),
+                dataMax = this.maxYValue(this.data),
                 offerXScale = d3.scale.linear().domain([0, this.data.length]).range([props.leftGutter, props.width - props.rightGutter]),
                 offerYTopScale = d3.scale.linear().domain([0, dataMax]).range([props.height - props.bottomGutter, props.topGutter]),
                 offerYHeightScale = d3.scale.linear().domain([0, dataMax]).range([0, props.height - props.topGutter - props.bottomGutter]),
@@ -157,13 +179,13 @@
             //Draw the bars.
             dataEnter.append("rect")
                 .attr("x", function (d, i) { return offerXScale(i); })
-                .attr("y", offerYTopScale)
+                .attr("y", this.applyYScale(offerYTopScale))
                 .attr("width", barWidth)
-                .attr("height", offerYHeightScale)
+                .attr("height", this.applyYScale(offerYHeightScale))
                 .attr('fill', this.options.color);
 
         }
-    };
+    });
 
     expose.StackedBarGraph = function (data, options) {
         var defaults = {
@@ -173,7 +195,7 @@
         this.data = data;
         this.options = extend(defaults, options);
     };
-    expose.StackedBarGraph.prototype = {
+    expose.StackedBarGraph.prototype = extend(new BaseGraph(), {
         render: function (svg, props) {
 
             var key,
@@ -216,31 +238,30 @@
 
 
         }
-    };
+    });
 
     expose.LineGraph = function (data, options) {
         var defaults = {
-            color: '#000'
+            color: '#000',
+            yValue: null
         };
 
         this.data = data;
         this.options = extend(defaults, options);
     };
-    expose.LineGraph.prototype = {
+    expose.LineGraph.prototype = extend(new BaseGraph(), {
         render: function (svg, props) {
 
             var barSeparation = 1,
                 barWidth = -barSeparation + (props.width - props.leftGutter - props.rightGutter) / this.data.length,
-                dataMax = d3.max(this.data),
-                salesXScale = d3.scale.linear().domain([0, this.data.length]).range([props.leftGutter, props.width - props.rightGutter]),
-                salesYScale = d3.scale.linear().domain([0, dataMax]).range([props.height - props.bottomGutter, props.topGutter]),
+                dataMax = this.maxYValue(this.data),
+                xScale = d3.scale.linear().domain([0, this.data.length]).range([props.leftGutter, props.width - props.rightGutter]),
+                yScale = d3.scale.linear().domain([0, dataMax]).range([props.height - props.bottomGutter, props.topGutter]),
                 line = d3.svg.line()
                     .x(function (d, i) {
-                        return barWidth / 2 + salesXScale(i);
+                        return barWidth / 2 + xScale(i);
                     })
-                    .y(function (d) {
-                        return salesYScale(d);
-                    })
+                    .y(this.applyYScale(yScale))
                     .interpolate('cardinal')
                     .tension(0.9);
 
@@ -251,7 +272,7 @@
                 .attr('fill', 'none');
 
         }
-    };
+    });
 
     expose.GraphAxis = function (min, max, options) {
         var defaults = {
@@ -268,7 +289,7 @@
         this.max = max;
         this.options = extend(defaults, options);
     };
-    expose.GraphAxis.prototype = {
+    expose.GraphAxis.prototype = extend(new BaseGraph(), {
         render: function (svg, props) {
 
             var axisScale = d3.scale[this.options.scale]().domain([this.min, this.max]).range([props.height - props.bottomGutter, props.topGutter]),
@@ -307,7 +328,7 @@
 
             if (this.options.position === 'bottom' && this.options.type !== 'date') {
                 axisScale = d3.scale.linear().domain([this.min, this.max]).range([props.leftGutter, props.width - props.rightGutter]);
-                axis = d3.svg.axis().scale(axisScale).orient('bottom');                
+                axis = d3.svg.axis().scale(axisScale).orient('bottom');
             }
 
             svg.append('defs').append('style').text('.axis path, .axis line {' + this.options.style + '} .axis text {' + this.options.labelStyle + '}');
@@ -325,7 +346,7 @@
             }
 
         }
-    };
+    });
 
 
     expose.LineAxis = function (options) {
@@ -335,11 +356,11 @@
 
         this.options = extend(defaults, options);
     };
-    expose.LineAxis.prototype = {
+    expose.LineAxis.prototype = extend(new BaseGraph(), {
         render: function (svg, props) {
 
             var x1 = props.leftGutter,
-                y1 = props.topGutter, 
+                y1 = props.topGutter,
                 x2 = props.width - props.rightGutter,
                 y2 = props.height - props.bottomGutter,
                 axisSvg;
@@ -362,7 +383,7 @@
                 .attr('y2', y2);
 
         }
-    };
+    });
 
     expose.TimeValueGraph = function (data, options) {
         var defaults = {
@@ -375,7 +396,7 @@
         this.data = data;
         this.options = extend(defaults, options);
     };
-    expose.TimeValueGraph.prototype = {
+    expose.TimeValueGraph.prototype = extend(new BaseGraph(), {
         render: function (svg, props) {
 
             var options = this.options,
@@ -446,7 +467,7 @@
                 });
 
         }
-    };
+    });
 
     window.ezD3Graphs = expose;
 

@@ -9,29 +9,32 @@
     d3.json('../data/orders.json', function(data) {
 
         var graph,
-            orders = ezD3Graphs.pluck(data, 'orders'),
-            sales = ezD3Graphs.pluck(data, 'sales'),
-            startDate = new Date(new Date().getTime() - orders.length * 86400 * 1000);
-
-        var leftAxis = new ezD3Graphs.GraphAxis(0, d3.max(orders), {
-            position: 'left',
-            label: 'Daily Orders',
-            ticks: relativeTicks
-        }), ordersGraph = new ezD3Graphs.BarGraph(orders, {
-            color: 'lightblue'
-        }), salesGraph = new ezD3Graphs.LineGraph(sales, {
-            color: 'darkgreen'
-        }), rightAxis = new ezD3Graphs.GraphAxis(0, d3.max(sales), {
-            position: 'right',
-            color: 'darkgreen',
-            label: 'Daily Sales',
-            ticks: relativeTicks,
-            tickFormat: function(d) { return '$' + d; }
-        }), dateAxis = new ezD3Graphs.GraphAxis(startDate, new Date(), {
-            position: 'bottom',
-            type: 'date',
-            ticks: dateTicks
-        });
+            startDate = new Date(new Date().getTime() - data.length * 86400 * 1000),
+            ordersGraph = new ezD3Graphs.BarGraph(data, {
+                color: 'lightblue',
+                yValue: 'orders'
+            }),
+            salesGraph = new ezD3Graphs.LineGraph(data, {
+                color: 'darkgreen',
+                yValue: 'sales'
+            }),
+            leftAxis = new ezD3Graphs.GraphAxis(0, ordersGraph.maxYValue(data), {
+                position: 'left',
+                label: 'Daily Orders',
+                ticks: relativeTicks
+            }),
+            rightAxis = new ezD3Graphs.GraphAxis(0, salesGraph.maxYValue(data), {
+                position: 'right',
+                color: 'darkgreen',
+                label: 'Daily Sales',
+                ticks: relativeTicks,
+                tickFormat: function(d) { return '$' + d; }
+            }),
+            dateAxis = new ezD3Graphs.GraphAxis(startDate, new Date(), {
+                position: 'bottom',
+                type: 'date',
+                ticks: dateTicks
+            });
 
         graph = new ezD3Graphs.ComboGraph('#orders', graphWidth, graphHeight);
         graph.add(ordersGraph)
