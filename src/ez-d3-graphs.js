@@ -8,7 +8,13 @@
 
 (function (d3, window) {
     var expose = {},
-        rad2deg = 180 / Math.PI;
+        rad2deg = 180 / Math.PI,
+        globalTickRatio = 25,
+        defaultLeftGutterAxis = 45,
+        defaultRightGutterAxis = 60,
+        defaultBottomGutterAxis = 20,
+        leftLabelOffset = 15,
+        rightLabelOffset = 55;
 
     function extend(a, b) {
         var i;
@@ -91,15 +97,15 @@
 
             if (this.leftAxis) {
                 this.graphs.push(this.leftAxis);
-                this.options.leftGutter += 45;
+                this.options.leftGutter += this.leftAxis.getWidth();
             }
             if (this.rightAxis) {
                 this.graphs.push(this.rightAxis);
-                this.options.rightGutter += 60;
+                this.options.rightGutter += this.rightAxis.getWidth();
             }
             if (this.bottomAxis) {
                 this.graphs.push(this.bottomAxis);
-                this.options.bottomGutter += 20;
+                this.options.bottomGutter += this.bottomAxis.getHeight();
             }
 
             for (i = 0; i < this.graphs.length; i++) {
@@ -119,7 +125,7 @@
         add: function (graph) {
             var axisOptions = {
                     position: 'left',
-                    ticks: this.height / 25
+                    ticks: this.height / globalTickRatio
                 };
 
             this.graphs.push(graph);
@@ -159,7 +165,8 @@
     expose.BarGraph = function (data, options) {
         var defaults = {
             color: '#000',
-            yValue: null
+            yValue: null,
+            barSeparation: 1
         };
 
         this.data = data;
@@ -168,8 +175,7 @@
     expose.BarGraph.prototype = extend(new BaseGraph(), {
         render: function (svg, props) {
 
-            var barSeparation = 1,
-                barWidth = -barSeparation + (props.width - props.leftGutter - props.rightGutter) / this.data.length,
+            var barWidth = -this.options.barSeparation + (props.width - props.leftGutter - props.rightGutter) / this.data.length,
                 dataMax = this.maxYValue(this.data),
                 offerXScale = d3.scale.linear().domain([0, this.data.length]).range([props.leftGutter, props.width - props.rightGutter]),
                 offerYTopScale = d3.scale.linear().domain([0, dataMax]).range([props.height - props.bottomGutter, props.topGutter]),
@@ -189,7 +195,8 @@
 
     expose.StackedBarGraph = function (data, options) {
         var defaults = {
-            color: '#000'
+            color: '#000',
+            barSeparation: 1
         };
 
         this.data = data;
@@ -199,8 +206,7 @@
         render: function (svg, props) {
 
             var key,
-                barSeparation = 1,
-                barWidth = -barSeparation + (props.width - props.leftGutter - props.rightGutter) / this.data.length,
+                barWidth = -this.options.barSeparation + (props.width - props.leftGutter - props.rightGutter) / this.data.length,
                 dataMax = expose.crawlMax(this.data),
                 offerXScale = d3.scale.linear().domain([0, this.data.length]).range([props.leftGutter, props.width - props.rightGutter]),
                 offerYTopScale = d3.scale.linear().domain([0, dataMax]).range([props.height - props.bottomGutter, props.topGutter]),
@@ -243,7 +249,9 @@
     expose.LineGraph = function (data, options) {
         var defaults = {
             color: '#000',
-            yValue: null
+            yValue: null,
+            lineTension: 0.9,
+            'stroke-width': 3
         };
 
         this.data = data;
@@ -263,12 +271,12 @@
                     })
                     .y(this.applyYScale(yScale))
                     .interpolate('cardinal')
-                    .tension(0.9);
+                    .tension(this.options.lineTension);
 
             // the line path
             svg.append("svg:path").attr("d", line(this.data))
                 .attr('stroke', this.options.color)
-                .attr('stroke-width', '3')
+                .attr('stroke-width', this.options['stroke-width'])
                 .attr('fill', 'none');
 
         }
@@ -290,6 +298,18 @@
         this.options = extend(defaults, options);
     };
     expose.GraphAxis.prototype = extend(new BaseGraph(), {
+        getWidth: function() {
+            if (this.options.position === 'left') {
+                return defaultLeftGutterAxis;
+            } else if (this.options.position === 'right') {
+                return defaultRightGutterAxis;
+            }
+
+            return 0;
+        },
+        getHeight: function() {
+            return defaultBottomGutterAxis;
+        },
         render: function (svg, props) {
 
             var axisScale = d3.scale[this.options.scale]().domain([this.min, this.max]).range([props.height - props.bottomGutter, props.topGutter]),
@@ -297,7 +317,6 @@
                 translateX = 0,
                 translateY = 0,
                 translateLabelX = 0,
-                fontSizeDivisor = 10,
                 axisSvg;
 
             if (this.options.type === 'date') {
@@ -317,10 +336,10 @@
 
             if (this.options.position === 'left') {
                 translateX = props.leftGutter;
-                translateLabelX = -30 + props.height / 60;
+                translateLabelX = leftLabelOffset - props.leftGutter;
             } else if (this.options.position === 'right') {
                 translateX = props.width - props.rightGutter;
-                translateLabelX = 55;
+                translateLabelX = rightLabelOffset;
             } else if (this.options.position === 'bottom') {
                 translateX = 0;
                 translateY = props.height - props.bottomGutter;
@@ -342,7 +361,7 @@
                 axisSvg.append('text')
                     .text(this.options.label)
                     .attr('fill', this.options.labelColor)
-                    .attr('transform', 'translate(' + translateLabelX + ',' + (props.height - 20) + ')rotate(270)');
+                    .attr('transform', 'translate(' + translateLabelX + ',' + (props.height - defaultBottomGutterAxis) + ')rotate(270)');
             }
 
         }
@@ -357,6 +376,9 @@
         this.options = extend(defaults, options);
     };
     expose.LineAxis.prototype = extend(new BaseGraph(), {
+        getHeight: function() {
+            return defaultBottomGutterAxis;
+        },
         render: function (svg, props) {
 
             var x1 = props.leftGutter,
