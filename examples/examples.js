@@ -21,11 +21,16 @@
             leftAxis = new ezD3Graphs.GraphAxis(0, ordersGraph.maxYValue(data), {
                 position: 'left',
                 label: 'Daily Orders',
+                axisColor: 'darkblue',
+                tickColor: 'lightblue',
+                labelColor: 'lightblue',
                 ticks: relativeTicks
             }),
             rightAxis = new ezD3Graphs.GraphAxis(0, salesGraph.maxYValue(data), {
                 position: 'right',
-                color: 'darkgreen',
+                axisColor: 'purple',
+                tickColor: 'orange',
+                labelColor: 'darkgreen',
                 label: 'Daily Sales',
                 ticks: relativeTicks,
                 tickFormat: function(d) { return '$' + d; }

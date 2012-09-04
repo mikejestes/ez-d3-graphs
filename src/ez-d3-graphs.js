@@ -285,11 +285,13 @@
     expose.GraphAxis = function (min, max, options) {
         var defaults = {
             position: 'left',
-            label: null,
+            axisColor: '#000',
             labelColor: '#000',
+            tickColor: '#000',
+            label: null,
             ticks: null,
             scale: 'linear',
-            style: 'fill: none; stroke: black; shape-rendering: crispEdges;',
+            style: 'fill: none; shape-rendering: crispEdges',
             labelStyle: 'font-family: sans-serif; font-size: 12px'
         };
 
@@ -317,7 +319,8 @@
                 translateX = 0,
                 translateY = 0,
                 translateLabelX = 0,
-                axisSvg;
+                axisSvg,
+                unique = 'a' + d3.random.normal()().toString().substr(3);
 
             if (this.options.type === 'date') {
                 axisScale = d3.time.scale().domain([this.min, this.max]).range([props.leftGutter, props.width - props.rightGutter]);
@@ -350,17 +353,17 @@
                 axis = d3.svg.axis().scale(axisScale).orient('bottom');
             }
 
-            svg.append('defs').append('style').text('.axis path, .axis line {' + this.options.style + '} .axis text {' + this.options.labelStyle + '}');
+            svg.append('defs').append('style').text('.' + unique + ' path, .' + unique + ' line {' + this.options.style + '; stroke: ' + this.options.axisColor + '} .' + unique + ' text {' + this.options.labelStyle + '; fill: ' + this.options.tickColor + '}');
 
             axisSvg = svg.append('g')
-                .attr('class', 'axis')
+                .attr('class', unique)
                 .attr('transform', 'translate(' + translateX + ', ' + translateY + ')')
                 .call(axis);
 
             if (this.options.label) {
                 axisSvg.append('text')
                     .text(this.options.label)
-                    .attr('fill', this.options.labelColor)
+                    .attr('style', 'fill:' + this.options.labelColor)
                     .attr('transform', 'translate(' + translateLabelX + ',' + (props.height - defaultBottomGutterAxis) + ')rotate(270)');
             }
 
@@ -370,7 +373,8 @@
 
     expose.LineAxis = function (options) {
         var defaults = {
-            position: 'left'
+            position: 'left',
+            axisColor: '#000'
         };
 
         this.options = extend(defaults, options);
@@ -385,7 +389,8 @@
                 y1 = props.topGutter,
                 x2 = props.width - props.rightGutter,
                 y2 = props.height - props.bottomGutter,
-                axisSvg;
+                axisSvg,
+                unique = 'a' + d3.random.normal()().toString().substr(3);
 
             if (this.options.position === 'left') {
                 x2 = x1;
@@ -395,8 +400,10 @@
                 y1 = y2 = props.height - props.bottomGutter;
             }
 
+            svg.append('defs').append('style').text('.' + unique + ' path, .' + unique + ' line {' + this.options.style + '; stroke: ' + this.options.axisColor + '}');
+
             axisSvg = svg.append('g')
-                .attr('class', 'axis');
+                .attr('class', unique);
 
             axisSvg.append('line')
                 .attr('x1', x1)
