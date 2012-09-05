@@ -24,6 +24,20 @@
         return a;
     }
 
+    expose.oppositeColor = function(color) {
+        var c = d3.hsl(color),
+            opposite;
+
+        if (c.l === 0) {
+            c.l = 1;
+        } else {
+            c.l += .5;
+            c.l = c.l % 1;
+        }
+
+        return c.toString();
+    }
+
     expose.crawlMax = function (data) {
         var max = 0,
             i,
@@ -66,6 +80,36 @@
                     return scale(item[self.options.yValue]);
                 }
             };
+        },
+        showPopup: function(eventFunc, item, el, svg) {
+            if (this.options[eventFunc]) {
+                var x = parseInt(el.getAttribute('x'), 10),
+                    y = el.getAttribute('y') - 5,
+                    color = el.getAttribute('fill');
+
+                x = x + parseInt((el.getAttribute('width') / 2), 10);
+
+                this.drawPopup(svg, x, y, this.options[eventFunc](item), color);
+            }
+        },
+        hidePopup: function(eventFunc, item, el, svg) {
+            if (this.popup) {
+                this.popup.remove();
+            }
+        },
+        drawPopup: function(svg, x, y, value, color) {
+            if (y < 10) {
+                y += 15;
+                color = expose.oppositeColor(color);
+            }
+
+            this.popup = svg.append('text')
+                .text(value)
+                .attr('x', x)
+                .attr('y', y)
+                .attr('text-anchor', 'middle')
+                .attr('class', 'popup')
+                .attr('fill', color);
         }
     };
 
@@ -94,6 +138,8 @@
             var svg = d3.select(this.el).append("svg")
                 .attr("width", this.width + 'px')
                 .attr("height", this.height + 'px');
+
+            svg.append('defs').append('style').text('.popup { font-family: sans-serif; font-size: 10px; }');
 
             if (this.leftAxis) {
                 this.graphs.push(this.leftAxis);
@@ -175,7 +221,8 @@
     expose.BarGraph.prototype = extend(new BaseGraph(), {
         render: function (svg, props) {
 
-            var barWidth = -this.options.barSeparation + (props.width - props.leftGutter - props.rightGutter) / this.data.length,
+            var self = this,
+                barWidth = -this.options.barSeparation + (props.width - props.leftGutter - props.rightGutter) / this.data.length,
                 dataMax = this.maxYValue(this.data),
                 offerXScale = d3.scale.linear().domain([0, this.data.length]).range([props.leftGutter, props.width - props.rightGutter]),
                 offerYTopScale = d3.scale.linear().domain([0, dataMax]).range([props.height - props.bottomGutter, props.topGutter]),
@@ -188,7 +235,14 @@
                 .attr("y", this.applyYScale(offerYTopScale))
                 .attr("width", barWidth)
                 .attr("height", this.applyYScale(offerYHeightScale))
-                .attr('fill', this.options.color);
+                .attr('fill', this.options.color)
+                .attr('class', 'graph-value')
+                .on('mouseenter', function(item) {
+                    self.showPopup('onHover', item, this, svg);
+                })
+                .on('mouseleave', function(item) {
+                    self.hidePopup('onHover', item, this, svg);
+                });
 
         }
     });

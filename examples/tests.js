@@ -43,7 +43,10 @@
         }
 
         bar = new ezD3Graphs.BarGraph(data, {
-            yValue: 'value'
+            yValue: 'value',
+            onHover: function(item) {
+                return item.value;
+            }
         });
         graph.add(bar);
 
