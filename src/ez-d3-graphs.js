@@ -109,6 +109,9 @@
             }
 
             for (i = 0; i < this.graphs.length; i++) {
+                if (this.graphs[i].before) {
+                    this.graphs[i].before();
+                }
                 this.graphs[i].render(svg, {
                     width: this.width,
                     height: this.height,
@@ -117,6 +120,9 @@
                     bottomGutter: this.options.bottomGutter,
                     leftGutter: this.options.leftGutter
                 });
+                if (this.graphs[i].after) {
+                    this.graphs[i].after();
+                }
             }
 
             return svg;
@@ -494,6 +500,79 @@
 
                     return 'translate(' + d3.round(xScale(data[options.x] + data[options.width])) + ', ' + d3.round(y2Scale(data[options.y2])) + ')rotate(' + rotate + ')';
                 });
+
+        }
+    });
+
+
+    expose.ScatterPlot = function (data, options) {
+        var defaults = {
+            color: '#000',
+            element: 'rect',
+            width: 10,
+            height: 10
+        };
+
+        this.data = data;
+        this.options = extend(defaults, options);
+    };
+    expose.ScatterPlot.prototype = extend(new BaseGraph(), {
+        maxXValue: function() {
+            return d3.max(d3.keys(this.data), function(i) {
+                return parseFloat(i, 10);
+            })
+        },
+        maxYValue: function() {
+            return d3.max(d3.values(this.data), function(i) {
+                return parseFloat(i, 10);
+            })
+        },
+        render: function (svg, props) {
+
+            var self = this,
+                dataEnter = svg.append('g').selectAll(self.element).data(d3.keys(this.data)).enter(),
+                x = 'x',
+                y = 'y';
+
+            self.xScale = d3.scale.linear().domain([0, this.maxXValue()]).range([props.leftGutter, props.width - props.rightGutter]);
+            self.yScale = d3.scale.linear().domain([0, this.maxYValue()]).range([props.height - props.bottomGutter, props.topGutter]);
+
+            if (this.options.element == 'circle') {
+                x = 'cx';
+                y = 'cy';
+            }
+
+            dataEnter.append(self.options.element)
+                .attr(x, function (d, i) { return self.xScale(d3.keys(self.data)[i]); })
+                .attr(y, function (i) { return self.yScale(self.data[i]); })
+                .attr("width", self.options.width)
+                .attr("height", self.options.height)
+                .attr("r", self.options.width)
+                .attr('fill', this.options.color);
+
+        }
+    });
+
+    expose.Line = function (options) {
+        var defaults = {
+            color: '#0f0',
+            thickness: 2,
+            opacity: 1
+        };
+
+        this.options = extend(defaults, options);
+    };
+    expose.Line.prototype = extend(new BaseGraph(), {
+        render: function (svg, props) {
+
+            svg.append("line")
+                .attr('x1', this.xScale(this.options.x1))
+                .attr('y1', this.yScale(this.options.y1))
+                .attr('x2', this.xScale(this.options.x2))
+                .attr('y2', this.yScale(this.options.y2))
+                .attr('stroke', this.options.color)
+                .attr('stroke-width', this.options.thickness)
+                .attr('opacity', this.options.opacity);
 
         }
     });
