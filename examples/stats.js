@@ -47,7 +47,7 @@
                 label: 'Likelyhood',
                 tickFormat: function(d) { return d * 100 + '%'; }
             }),
-            bottomAxis = new ezD3Graphs.GraphAxis(0, acceptanceGraph.maxXValue(), {
+            bottomAxis = new ezD3Graphs.GraphAxis(0, 100, {
                 position: 'bottom',
                 label: 'Discount',
                 tickFormat: function(d) { return d + '%'; }
@@ -60,7 +60,7 @@
             graph = new ezD3Graphs.ComboGraph('#xy', 800, 300);
 
         // force the perspective of 100% x values
-        acceptanceGraph.maxXValue = function() {
+        acceptanceGraph.maxXValue = function(data) {
             return 100;
         }
 

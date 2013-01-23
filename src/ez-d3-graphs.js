@@ -65,8 +65,10 @@
     BaseGraph = function() {};
     BaseGraph.prototype = {
         maxYValue: function(data) {
-            if (this.options.yValue === null) {
-                return d3.max(data);
+            if (!this.options.yValue) {
+                return d3.max(d3.values(data), function(i) {
+                    return parseFloat(i, 10);
+                });
             } else {
                 return d3.max(expose.pluck(data, this.options.yValue));
             }
@@ -476,7 +478,7 @@
 
     expose.StackedLineGraph = function (data, options) {
         var defaults = {
-            color: '#000',
+            color: '#000'
         };
 
         this.data = data;
@@ -794,15 +796,10 @@
         this.options = extend(defaults, options);
     };
     expose.ScatterPlot.prototype = extend(new BaseGraph(), {
-        maxXValue: function() {
-            return d3.max(d3.keys(this.data), function(i) {
+        maxXValue: function(data) {
+            return d3.max(d3.keys(data), function(i) {
                 return parseFloat(i, 10);
-            })
-        },
-        maxYValue: function() {
-            return d3.max(d3.values(this.data), function(i) {
-                return parseFloat(i, 10);
-            })
+            });
         },
         render: function (svg, props) {
 
@@ -811,8 +808,8 @@
                 x = 'x',
                 y = 'y';
 
-            self.xScale = d3.scale.linear().domain([0, this.maxXValue()]).range([props.leftGutter, props.width - props.rightGutter]);
-            self.yScale = d3.scale.linear().domain([0, this.maxYValue()]).range([props.height - props.bottomGutter, props.topGutter]);
+            self.xScale = d3.scale.linear().domain([0, this.maxXValue(this.data)]).range([props.leftGutter, props.width - props.rightGutter]);
+            self.yScale = d3.scale.linear().domain([0, this.maxYValue(this.data)]).range([props.height - props.bottomGutter, props.topGutter]);
 
             if (this.options.element == 'circle') {
                 x = 'cx';
