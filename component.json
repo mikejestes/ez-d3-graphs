@@ -1,0 +1,7 @@
+{
+  "name": "ez-d3-graphs",
+  "version": "0.0.0",
+  "dependencies": {
+    "d3": "~3.0.4"
+  }
+}
