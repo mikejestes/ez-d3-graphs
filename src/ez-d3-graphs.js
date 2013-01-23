@@ -24,6 +24,20 @@
         return a;
     }
 
+    expose.oppositeColor = function(color) {
+        var c = d3.hsl(color),
+            opposite;
+
+        if (c.l === 0) {
+            c.l = 1;
+        } else {
+            c.l += 0.5;
+            c.l = c.l % 1;
+        }
+
+        return c.toString();
+    };
+
     expose.crawlMax = function (data) {
         var max = 0,
             i,
@@ -66,6 +80,36 @@
                     return scale(item[self.options.yValue]);
                 }
             };
+        },
+        showPopup: function(eventFunc, item, el, svg) {
+            if (this.options[eventFunc]) {
+                var x = parseInt(el.getAttribute('x'), 10),
+                    y = el.getAttribute('y') - 5,
+                    color = el.getAttribute('fill');
+
+                x = x + parseInt((el.getAttribute('width') / 2), 10);
+
+                this.drawPopup(svg, x, y, this.options[eventFunc](item), color);
+            }
+        },
+        hidePopup: function(eventFunc, item, el, svg) {
+            if (this.popup) {
+                this.popup.remove();
+            }
+        },
+        drawPopup: function(svg, x, y, value, color) {
+            if (y < 10) {
+                y += 15;
+                color = expose.oppositeColor(color);
+            }
+
+            this.popup = svg.append('text')
+                .text(value)
+                .attr('x', x)
+                .attr('y', y)
+                .attr('text-anchor', 'middle')
+                .attr('class', 'popup')
+                .attr('fill', color);
         }
     };
 
@@ -94,6 +138,8 @@
             var svg = d3.select(this.el).append("svg")
                 .attr("width", this.width + 'px')
                 .attr("height", this.height + 'px');
+
+            svg.append('defs').append('style').text('.popup { font-family: sans-serif; font-size: 10px; }');
 
             if (this.leftAxis) {
                 this.graphs.push(this.leftAxis);
@@ -181,7 +227,8 @@
     expose.BarGraph.prototype = extend(new BaseGraph(), {
         render: function (svg, props) {
 
-            var barWidth = -this.options.barSeparation + (props.width - props.leftGutter - props.rightGutter) / this.data.length,
+            var self = this,
+                barWidth = -this.options.barSeparation + (props.width - props.leftGutter - props.rightGutter) / this.data.length,
                 dataMax = this.maxYValue(this.data),
                 offerXScale = d3.scale.linear().domain([0, this.data.length]).range([props.leftGutter, props.width - props.rightGutter]),
                 offerYTopScale = d3.scale.linear().domain([0, dataMax]).range([props.height - props.bottomGutter, props.topGutter]),
@@ -194,7 +241,14 @@
                 .attr("y", this.applyYScale(offerYTopScale))
                 .attr("width", barWidth)
                 .attr("height", this.applyYScale(offerYHeightScale))
-                .attr('fill', this.options.color);
+                .attr('fill', this.options.color)
+                .attr('class', 'graph-value')
+                .on('mouseenter', function(item) {
+                    self.showPopup('onHover', item, this, svg);
+                })
+                .on('mouseleave', function(item) {
+                    self.hidePopup('onHover', item, this, svg);
+                });
 
         }
     });
@@ -420,6 +474,84 @@
         }
     });
 
+    expose.StackedLineGraph = function (data, options) {
+        var defaults = {
+            color: '#000',
+        };
+
+        this.data = data;
+        this.options = extend(defaults, options);
+    };
+    expose.StackedLineGraph.prototype = extend(new BaseGraph(), {
+        maxYValue: function(data) {
+
+            var max = 0;
+            data.map(function(d) {
+                max = d3.max([d3.sum(d3.map(d).values()), max]);
+            });
+
+            return max;
+        },
+        render: function (svg, props) {
+
+            var self = this;
+
+            var x = d3.time.scale()
+                .range([props.leftGutter, props.width - props.rightGutter]);
+
+            var y = d3.scale.linear()
+                .range([props.height - props.bottomGutter, props.topGutter]);
+
+            var color = d3.scale.category20();
+
+            var area = d3.svg.area()
+                .x(function(d, i) { return x(i); })
+                .y0(function(d) { return y(d.y0); })
+                .y1(function(d) { return y(d.y0 + d.y); });
+
+            var stack = d3.layout.stack()
+                .values(function(d) { return d.values; });
+
+            color.domain(d3.keys(this.data[0]));
+
+            var max = 0;
+
+            var browsers = stack(color.domain().map(function(name) {
+                return {
+                    name: name,
+                    values: self.data.map(function(d) {
+                        max = d3.max([d3.sum(d3.map(d).values()), max]);
+                        return {y: d[name]};
+                    })
+                };
+            }));
+
+            x.domain([0, this.data.length]);
+            y.domain([0, max]);
+
+            var browser = svg.selectAll(".browser")
+                .data(browsers)
+                .enter().append("g")
+                .attr("class", "browser");
+
+            browser.append("path")
+              .attr("class", "area")
+              .attr('title', function(d) {return d.name; })
+              .attr("d", function(d) { return area(d.values); })
+              .style("fill", function(d) { return color(d.name); });
+
+            /*
+            browser.append("text")
+              .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; })
+              .attr("transform", function(d, i) { return "translate(" + x(i) + "," + y(d.value.y0 + d.value.y / 2) + ")"; })
+              .attr("x", -6)
+              .attr("dy", ".35em")
+              .text(function(d) { return d.name; });
+            */
+
+        }
+    });
+
     expose.TimeValueGraph = function (data, options) {
         var defaults = {
             color: '#000',
@@ -504,6 +636,151 @@
         }
     });
 
+    expose.BoxPlot = function (data, options) {
+        var defaults = {
+            color: '#000',
+            yValue: null,
+            barSeparation: 1,
+            formatNumber: function(n) { return n; }
+        },
+        self = this;
+
+        this.data = data;
+        this.options = extend(defaults, options);
+        this.min = Infinity;
+        this.max = -Infinity;
+        this.items = 0;
+
+        d3.map(this.data).forEach(function (key, values) {
+            for (var i in values) {
+                if (values[i] < self.min) {
+                    self.min = values[i];
+                }
+                if (values[i] > self.max) {
+                    self.max = values[i];
+                }
+            }
+
+            self.items += 1;
+        });
+    };
+    expose.BoxPlot.prototype = extend(new BaseGraph(), {
+        render: function (svg, props) {
+
+            var self = this,
+                barWidth = 40,
+                yscale,
+                xscale,
+                i = 0,
+                textWidth = 25,
+                textHeight = 10;
+
+            xscale = d3.scale.linear().domain([0, this.items]).range([props.leftGutter, props.width - props.rightGutter]);
+            yscale = d3.scale.linear().domain([this.min, this.max]).range([props.height - props.bottomGutter, props.topGutter]);
+
+            i = 0.5;
+            d3.map(this.data).forEach(function (key, values) {
+
+                values = values.sort(d3.ascending);
+
+                var bottom = d3.min(values),
+                    first = d3.quantile(values, 0.25),
+                    median = d3.quantile(values, 0.5),
+                    third = d3.quantile(values, 0.75),
+                    top = d3.max(values);
+
+                // label
+                var label = svg.append('text')
+                    .text(key)
+                    .attr('x', xscale(i))
+                    .attr('y', yscale(top) - textHeight);
+
+                label = label[0][0];
+                label.setAttribute('x', label.getAttribute('x') - label.getBBox().width / 2);
+
+                // quarters box
+                svg.append('rect')
+                    .attr("x", xscale(i) - barWidth / 2)
+                    .attr("y", yscale(third))
+                    .attr("width", barWidth)
+                    .attr("height", yscale(first) - yscale(third))
+                    .attr('stroke', self.options.color)
+                    .attr('fill', '#fff');
+
+                // median
+                svg.append('line')
+                    .attr('x1', xscale(i) - barWidth / 2)
+                    .attr('x2', xscale(i) + barWidth / 2)
+                    .attr('y1', yscale(median))
+                    .attr('y2', yscale(median))
+                    .attr('stroke', self.options.color);
+
+                // min line
+                svg.append('line')
+                    .attr('x1', xscale(i))
+                    .attr('x2', xscale(i))
+                    .attr('y1', yscale(first))
+                    .attr('y2', yscale(bottom))
+                    .attr('stroke', self.options.color)
+                    .attr('stroke-dasharray', '4 2');
+
+                svg.append('line')
+                    .attr('x1', xscale(i) - barWidth / 4)
+                    .attr('x2', xscale(i) + barWidth / 4)
+                    .attr('y1', yscale(bottom))
+                    .attr('y2', yscale(bottom))
+                    .attr('stroke', self.options.color);
+
+                // max line
+                svg.append('line')
+                    .attr('x1', xscale(i))
+                    .attr('x2', xscale(i))
+                    .attr('y1', yscale(top))
+                    .attr('y2', yscale(third))
+                    .attr('stroke', self.options.color)
+                    .attr('stroke-dasharray', '4 2');
+
+                svg.append('line')
+                    .attr('x1', xscale(i) - barWidth / 4)
+                    .attr('x2', xscale(i) + barWidth / 4)
+                    .attr('y1', yscale(top))
+                    .attr('y2', yscale(top))
+                    .attr('stroke', self.options.color);
+
+                // inline numbers
+                svg.append('text')
+                    .text(self.options.formatNumber(top))
+                    .attr('x', xscale(i) + barWidth / 2 + 2)
+                    .attr('y', yscale(top) + textHeight / 2);
+
+                svg.append('text')
+                    .text(self.options.formatNumber(third))
+                    .attr('x', xscale(i) - barWidth / 2 - textWidth)
+                    .attr('y', yscale(third) + textHeight / 2);
+
+                if (yscale(median) - textHeight > yscale(top)) {
+                    svg.append('text')
+                        .text(self.options.formatNumber(median))
+                        .attr('x', xscale(i) + barWidth / 2 + 2)
+                        .attr('y', yscale(median) + textHeight / 2)
+                        .attr('style', 'font-weight: bold');
+                }
+
+                svg.append('text')
+                    .text(self.options.formatNumber(first))
+                    .attr('x', xscale(i) - barWidth / 2 - textWidth)
+                    .attr('y', yscale(first) + textHeight / 2);
+
+                svg.append('text')
+                    .text(self.options.formatNumber(bottom))
+                    .attr('x', xscale(i) + barWidth / 2 + 2)
+                    .attr('y', yscale(bottom) + textHeight / 2);
+
+                ++i;
+            });
+
+        }
+    });
 
     expose.ScatterPlot = function (data, options) {
         var defaults = {
