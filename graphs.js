@@ -5,7 +5,7 @@
         graphHeight = 200,
         largeGraphHeight = 200,
         relativeTicks = graphHeight / 30,
-        dateTicks = graphWidth / 60;
+        dateTicks = graphWidth / 100;
 
     d3.json('data/basic.json', function(data) {
 
