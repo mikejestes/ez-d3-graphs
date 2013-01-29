@@ -3,35 +3,89 @@
 <head>
 <title>EZ D3 Graphs - Basic Example</title>
 <meta charset="utf-8">
-<script src="https://raw.github.com/mbostock/d3/v3.0.4/d3.min.js"></script>
-<script src="https://raw.github.com/mikejestes/ez-d3-graphs/master/src/ez-d3-graphs.js"></script>
+<style>
+body, h1, p, a {
+    margin: 0;
+    padding: 0;
+}
+body {
+    background-color: #ccc;
+    font-family: sans-serif;
+}
+h1 {
+    padding: 20px 10px;
+}
+p {
+    margin: 0 10px;
+}
+.row {
+    width: 990px;
+    margin: 0 auto;
+    background-color: #ddd;
+}
+.column {
+    vertical-align: top;
+    width: 450px;
+    margin: 0 10px;
+    display: inline-block;
+}
+</style>
 </head>
 <body>
 
-<h2>Basic Bar Graph</h2>
-<div id="bar"></div>
+<a href="https://github.com/mikejestes/ez-d3-graphs"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png" alt="Fork me on GitHub"></a>
 
-<h2>Basic Line Graph</h2>
-<div id="line"></div>
+<div class="row">
 
+    <h1>Easy D3 Graphs</h1>
+    <p>A helper library to create svg graphs using the <a href="http://d3js.org/">d3 javascript library</a>.</p>
 
-<script>
+    <div class="column">
 
-d3.json('data/basic.json', function(data) {
+        <h2>Basic Bar Graph</h2>
+        <div id="bar"></div>
 
-    // easy bar graph
-    new ezD3Graphs.ComboGraph('#bar', 400, 100).add(new ezD3Graphs.BarGraph(data)).render();
+        <h2>Basic Line Graph</h2>
+        <div id="line"></div>
 
-    // line graph with label
-    var graph = new ezD3Graphs.ComboGraph('#line', 400, 100),
-        lineGraph = new ezD3Graphs.LineGraph(data, {label: 'Pickles Eaten'});
+        <h2>Auto dual axis</h2>
+        <div id="axis"></div>
 
-    graph.add(lineGraph).render();
+        <h2>Remove axis</h2>
+        <div id="noaxis"></div>
 
-});
+        <h2>Order Duration</h2>
+        <div id="duration"></div>
 
+        <h2>Box Plot</h2>
+        <div id="boxplot"></div>
 
-</script>
+    </div>
+
+    <div class="column">
+
+        <h2>Stacked Line Graph</h2>
+        <div id="stacked-line"></div>
+
+        <h2>XY Scatter Plot with linear regression</h2>
+        <div id="xy"></div>
+
+        <h2>Popup number values</h2>
+        <div id="popup"></div>
+
+        <h2>Orders and Sales</h2>
+        <div id="orders"></div>
+
+        <h2>Transactions Types</h2>
+        <div id="transactions"></div>
+
+    </div>
+
+</div>
+
+<script src="https://raw.github.com/mbostock/d3/v3.0.4/d3.min.js"></script>
+<script src="https://raw.github.com/mikejestes/ez-d3-graphs/master/src/ez-d3-graphs.js"></script>
+<script src="graphs.js"></script>
 
 </body>
 </html>
