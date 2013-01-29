@@ -1,7 +1,8 @@
-
 # ez-d3-graphs
 
-Easy wrappers to help generate lovely graphs with d3 and svg
+Easy wrappers to help generate lovely graphs with d3 and svg.
+
+See examples: http://mikejestes.github.com/ez-d3-graphs/
 
 ## Generate new random data
     make clean
