@@ -1,17 +1,8 @@
-all: data
-clean:
-	rm data/*.json
+all: ez-d3-graphs.js
 
-data: data/duration.json data/orders.json data/transactions.json data/basic.json
+ez-d3-graphs.js: $(shell node_modules/.bin/smash --list src/ez-d3-graphs.js)
+	@rm -f $@
+	node_modules/.bin/smash src/ez-d3-graphs.js > $@
+	@chmod a-w $@
 
-data/duration.json:
-	node data/generate_duration.js > data/duration.json
-
-data/transactions.json:
-	node data/generate_transactions.js > data/transactions.json
-
-data/orders.json:
-	node data/generate_orders.js > data/orders.json
-
-data/basic.json:
-	node data/generate_basic.js > data/basic.json
+# node_modules/.bin/smash src/ez-d3-graphs.js | node_modules/.bin/uglifyjs - -b  --comments indent-level=2 -o $@
