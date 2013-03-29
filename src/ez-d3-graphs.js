@@ -246,11 +246,14 @@
                 .attr('fill', this.options.color)
                 .attr('class', 'graph-value')
                 .on('mouseenter', function(item) {
+                    console.log('mouseenter')
                     self.showPopup('onHover', item, this, svg);
                 })
                 .on('mouseleave', function(item) {
                     self.hidePopup('onHover', item, this, svg);
-                });
+                })
+                .append('svn:title')
+                    .text(function(i) { return self.options.yValue ? i[self.options.yValue] : i; });
 
         }
     });
@@ -265,6 +268,15 @@
         this.options = extend(defaults, options);
     };
     expose.StackedBarGraph.prototype = extend(new BaseGraph(), {
+        maxYValue: function(data) {
+
+            var max = 0;
+            data.map(function(d) {
+                max = d3.max([d3.sum(d3.map(d).values()), max]);
+            });
+
+            return max;
+        },
         render: function (svg, props) {
 
             var key,
@@ -300,7 +312,8 @@
                     .attr("width", barWidth)
                     .attr("height", heightFunc(key))
                     .attr("y", y)
-                    .attr('fill', this.options.fields[key]);
+                    .attr('fill', this.options.fields[key])
+                    .append('svg:title').text(function(d, i) { return i + ' ' + key; });
 
             }
 
@@ -394,11 +407,11 @@
             if (this.options.position === 'left') {
                 translateX = props.leftGutter;
                 translateLabelX = leftLabelOffset - props.leftGutter;
-                translateLabelY = (props.height - props.bottomGutter) / 2 + labelWidth
+                translateLabelY = (props.height - props.bottomGutter) / 2 + labelWidth;
             } else if (this.options.position === 'right') {
                 translateX = props.width - props.rightGutter;
                 translateLabelX = rightLabelOffset;
-                translateLabelY = (props.height - props.bottomGutter) / 2 + labelWidth
+                translateLabelY = (props.height - props.bottomGutter) / 2 + labelWidth;
             } else if (this.options.position === 'bottom') {
                 translateX = 0;
                 translateY = props.height - props.bottomGutter;
@@ -548,9 +561,10 @@
 
             browser.append("path")
               .attr("class", "area")
-              .attr('title', function(d) {return d.name; })
               .attr("d", function(d) { return area(d.values); })
-              .style("fill", function(d) { return color(d.name); });
+              .style("fill", function(d) { return color(d.name); })
+              .append('svg:title')
+                .text(function(d) { return d.name; });
 
             /*
             browser.append("text")
@@ -806,7 +820,7 @@
         this.data = data;
         this.options = extend(defaults, options);
     };
-    expose.ScatterPlot.prototype = extend(BaseGraph.prototype, {
+    expose.ScatterPlot.prototype = extend(new BaseGraph(), {
         maxXValue: function(data) {
             return d3.max(d3.keys(data), function(i) {
                 return parseFloat(i, 10);
