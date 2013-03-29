@@ -159,10 +159,12 @@
 
     d3.json('data/dots.json', function(data) {
 
-        var lr = linearRegression(d3.keys(data), d3.values(data));
+        var lr = linearRegression(ezD3Graphs.pluck(data, 'discount'), ezD3Graphs.pluck(data, 'rate'));
 
         var acceptanceGraph = new ezD3Graphs.ScatterPlot(data, {
                 color: 'darkblue',
+                xValue: 'discount',
+                yValue: 'rate',
                 element: 'circle',
                 width: 3
             }),
