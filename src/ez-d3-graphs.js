@@ -2,7 +2,7 @@
 * ez-d3-graphs
 * https://github.com/mikejestes/ez-d3-graphs
 *
-* Copyright (c) 2012 Mike Estes <mikejestes@gmail.com>
+* Copyright (c) 2012-2013 Mike Estes <mikejestes@gmail.com>
 * Licensed under the MIT license.
 */
 
@@ -381,11 +381,34 @@
                 translateX = 0,
                 translateY = 0,
                 translateLabelX = 0,
+                rotateTextDeg = 270,
                 axisSvg,
-                unique = 'a' + d3.random.normal()().toString().substr(3);
+                unique = 'a' + d3.random.normal()().toString().substr(3),
+                labelWidth = this.options.label ? this.options.label.length * 3.5 : 0;
 
             if (this.options.type === 'date') {
                 axisScale = d3.time.scale().domain([this.min, this.max]).range([props.leftGutter, props.width - props.rightGutter]);
+                axis = d3.svg.axis().scale(axisScale).orient('bottom');
+            }
+
+            if (this.options.position === 'left') {
+                translateX = props.leftGutter;
+                translateLabelX = leftLabelOffset - props.leftGutter;
+                translateLabelY = (props.height - props.bottomGutter) / 2 + labelWidth
+            } else if (this.options.position === 'right') {
+                translateX = props.width - props.rightGutter;
+                translateLabelX = rightLabelOffset;
+                translateLabelY = (props.height - props.bottomGutter) / 2 + labelWidth
+            } else if (this.options.position === 'bottom') {
+                translateX = 0;
+                translateY = props.height - props.bottomGutter;
+                rotateTextDeg = 0;
+                translateLabelX = props.width / 2 - labelWidth;
+                translateLabelY = props.bottomGutter;
+            }
+
+            if (this.options.position === 'bottom' && this.options.type !== 'date') {
+                axisScale = d3.scale.linear().domain([this.min, this.max]).range([props.leftGutter, props.width - props.rightGutter]);
                 axis = d3.svg.axis().scale(axisScale).orient('bottom');
             }
 
@@ -399,23 +422,10 @@
                 axis.tickValues(this.options.tickValues);
             }
 
-            if (this.options.position === 'left') {
-                translateX = props.leftGutter;
-                translateLabelX = leftLabelOffset - props.leftGutter;
-            } else if (this.options.position === 'right') {
-                translateX = props.width - props.rightGutter;
-                translateLabelX = rightLabelOffset;
-            } else if (this.options.position === 'bottom') {
-                translateX = 0;
-                translateY = props.height - props.bottomGutter;
-            }
-
-            if (this.options.position === 'bottom' && this.options.type !== 'date') {
-                axisScale = d3.scale.linear().domain([this.min, this.max]).range([props.leftGutter, props.width - props.rightGutter]);
-                axis = d3.svg.axis().scale(axisScale).orient('bottom');
-            }
-
-            svg.append('defs').append('style').text('.' + unique + ' path, .' + unique + ' line {' + this.options.style + '; stroke: ' + this.options.axisColor + '} .' + unique + ' text {' + this.options.labelStyle + '; fill: ' + this.options.tickColor + '}');
+            svg.append('defs')
+                .append('style')
+                .attr('transform', 'translate(' + translateX + ', ' + translateY + ')')
+                .text('.' + unique + ' path, .' + unique + ' line {' + this.options.style + '; stroke: ' + this.options.axisColor + '} .' + unique + ' text {' + this.options.labelStyle + '; fill: ' + this.options.tickColor + '}');
 
             axisSvg = svg.append('g')
                 .attr('class', unique)
@@ -426,7 +436,7 @@
                 axisSvg.append('text')
                     .text(this.options.label)
                     .attr('style', 'fill:' + this.options.labelColor)
-                    .attr('transform', 'translate(' + translateLabelX + ',' + (props.height - defaultBottomGutterAxis) + ')rotate(270)');
+                    .attr('transform', 'translate(' + translateLabelX + ',' + translateLabelY + ')rotate(' + rotateTextDeg + ')');
             }
 
         }
@@ -789,13 +799,14 @@
             color: '#000',
             element: 'rect',
             width: 10,
-            height: 10
+            height: 10,
+            opacity: 1
         };
 
         this.data = data;
         this.options = extend(defaults, options);
     };
-    expose.ScatterPlot.prototype = extend(new BaseGraph(), {
+    expose.ScatterPlot.prototype = extend(BaseGraph.prototype, {
         maxXValue: function(data) {
             return d3.max(d3.keys(data), function(i) {
                 return parseFloat(i, 10);
@@ -804,7 +815,7 @@
         render: function (svg, props) {
 
             var self = this,
-                dataEnter = svg.append('g').selectAll(self.element).data(d3.keys(this.data)).enter(),
+                dataEnter = svg.append('g').selectAll(self.element).data(this.data).enter(),
                 x = 'x',
                 y = 'y';
 
@@ -818,10 +829,11 @@
 
             dataEnter.append(self.options.element)
                 .attr(x, function (d, i) { return self.xScale(d3.keys(self.data)[i]); })
-                .attr(y, function (i) { return self.yScale(self.data[i]); })
+                .attr(y, this.applyYScale(self.yScale))
                 .attr("width", self.options.width)
                 .attr("height", self.options.height)
                 .attr("r", self.options.width)
+                .attr("opacity", self.options.opacity)
                 .attr('fill', this.options.color);
 
         }
