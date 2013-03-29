@@ -1,11 +1,12 @@
-/*
-* ez-d3-graphs
-* https://github.com/mikejestes/ez-d3-graphs
-*
-* Copyright (c) 2012-2013 Mike Estes <mikejestes@gmail.com>
-* Licensed under the MIT license.
-*/
-
+/**
+ * ez-d3-graphs
+ * https://github.com/mikejestes/ez-d3-graphs
+ *
+ * Copyright (c) 2012-2013 Mike Estes <mikejestes@gmail.com>
+ * Licensed under the MIT license.
+ *
+ *
+ */
 (function (d3, window) {
     var expose = {},
         rad2deg = 180 / Math.PI,
@@ -14,17 +15,18 @@
         defaultRightGutterAxis = 60,
         defaultBottomGutterAxis = 20,
         leftLabelOffset = 15,
-        rightLabelOffset = 55;
+        rightLabelOffset = 55,
+        BaseGraph = function () {};
+
 
     function extend(a, b) {
-        var i;
-        for (i in b) {
-            a[i] = b[i];
-        }
+        d3.keys(b).forEach(function (key) {
+            a[key] = b[key];
+        });
         return a;
     }
 
-    expose.oppositeColor = function(color) {
+    expose.oppositeColor = function (color) {
         var c = d3.hsl(color),
             opposite;
 
@@ -41,16 +43,15 @@
     expose.crawlMax = function (data) {
         var max = 0,
             i,
+            j,
             itemSum,
             key;
 
-        for (i = 0; i < data.length; i++) {
-            itemSum = 0;
-            for (key in data[i]) {
-                itemSum += data[i][key];
-            }
+        for (i = 0; i < data.length; i += 1) {
+            itemSum = d3.sum(d3.values(data[i]));
             max = Math.max(itemSum, max);
         }
+
         return max;
     };
 
@@ -62,28 +63,33 @@
         return result;
     };
 
-    BaseGraph = function() {};
     BaseGraph.prototype = {
-        maxYValue: function(data) {
+        maxYValue: function (data) {
+            var max;
             if (!this.options.yValue) {
-                return d3.max(d3.values(data), function(i) {
+                max =  d3.max(d3.values(data), function (i) {
                     return parseFloat(i, 10);
                 });
             } else {
-                return d3.max(expose.pluck(data, this.options.yValue));
+                max = d3.max(expose.pluck(data, this.options.yValue));
             }
+
+            return max;
         },
-        applyYScale: function(scale) {
+        applyYScale: function (scale) {
             var self = this;
-            return function(item) {
+            return function (item) {
+                var generatedScale;
                 if (self.options.yValue === null) {
-                    return scale(item);
+                    generatedScale = scale(item);
                 } else {
-                    return scale(item[self.options.yValue]);
+                    generatedScale = scale(item[self.options.yValue]);
                 }
+
+                return generatedScale;
             };
         },
-        showPopup: function(eventFunc, item, el, svg) {
+        showPopup: function (eventFunc, item, el, svg) {
             if (this.options[eventFunc]) {
                 var x = parseInt(el.getAttribute('x'), 10),
                     y = el.getAttribute('y') - 5,
@@ -94,12 +100,12 @@
                 this.drawPopup(svg, x, y, this.options[eventFunc](item), color);
             }
         },
-        hidePopup: function(eventFunc, item, el, svg) {
+        hidePopup: function (eventFunc, item, el, svg) {
             if (this.popup) {
                 this.popup.remove();
             }
         },
-        drawPopup: function(svg, x, y, value, color) {
+        drawPopup: function (svg, x, y, value, color) {
             if (y < 10) {
                 y += 15;
                 color = expose.oppositeColor(color);
@@ -135,11 +141,12 @@
 
     };
     expose.ComboGraph.prototype = {
-        render: function() {
+        render: function () {
 
-            var svg = d3.select(this.el).append("svg")
-                .attr("width", this.width + 'px')
-                .attr("height", this.height + 'px');
+            var i,
+                svg = d3.select(this.el).append("svg")
+                    .attr("width", this.width + 'px')
+                    .attr("height", this.height + 'px');
 
             svg.append('defs').append('style').text('.popup { font-family: sans-serif; font-size: 10px; }');
 
@@ -156,7 +163,7 @@
                 this.options.bottomGutter += this.bottomAxis.getHeight();
             }
 
-            for (i = 0; i < this.graphs.length; i++) {
+            for (i = 0; i < this.graphs.length; i += 1) {
                 if (this.graphs[i].before) {
                     this.graphs[i].before();
                 }
@@ -210,7 +217,7 @@
             this.bottomAxis = axis;
             return this;
         },
-        setOption: function(key, value) {
+        setOption: function (key, value) {
             this.options[key] = value;
             return this;
         }
@@ -245,15 +252,14 @@
                 .attr("height", this.applyYScale(offerYHeightScale))
                 .attr('fill', this.options.color)
                 .attr('class', 'graph-value')
-                .on('mouseenter', function(item) {
-                    console.log('mouseenter')
+                .on('mouseenter', function (item) {
                     self.showPopup('onHover', item, this, svg);
                 })
-                .on('mouseleave', function(item) {
+                .on('mouseleave', function (item) {
                     self.hidePopup('onHover', item, this, svg);
                 })
                 .append('svn:title')
-                    .text(function(i) { return self.options.yValue ? i[self.options.yValue] : i; });
+                    .text(function (i) { return self.options.yValue ? i[self.options.yValue] : i; });
 
         }
     });
@@ -268,10 +274,10 @@
         this.options = extend(defaults, options);
     };
     expose.StackedBarGraph.prototype = extend(new BaseGraph(), {
-        maxYValue: function(data) {
+        maxYValue: function (data) {
 
             var max = 0;
-            data.map(function(d) {
+            data.map(function (d) {
                 max = d3.max([d3.sum(d3.map(d).values()), max]);
             });
 
@@ -279,7 +285,7 @@
         },
         render: function (svg, props) {
 
-            var key,
+            var self = this,
                 barWidth = -this.options.barSeparation + (props.width - props.leftGutter - props.rightGutter) / this.data.length,
                 dataMax = expose.crawlMax(this.data),
                 offerXScale = d3.scale.linear().domain([0, this.data.length]).range([props.leftGutter, props.width - props.rightGutter]),
@@ -302,21 +308,23 @@
                 },
                 x = function (d, i) {
                     return offerXScale(i);
+                },
+                titleText = function (key) {
+                    return function (d, i) { return i + ' ' + key; };
                 };
 
-            for (key in this.options.fields) {
+            d3.map(this.options.fields).forEach(function (field, color) {
 
-                svg.append('g').selectAll("rect").data(this.data).enter()
+                svg.append('g').selectAll("rect").data(self.data).enter()
                     .append("rect")
                     .attr("x", x)
                     .attr("width", barWidth)
-                    .attr("height", heightFunc(key))
+                    .attr("height", heightFunc(field))
                     .attr("y", y)
-                    .attr('fill', this.options.fields[key])
-                    .append('svg:title').text(function(d, i) { return i + ' ' + key; });
+                    .attr('fill', color)
+                    .append('svg:title').text(titleText(field));
 
-            }
-
+            });
 
         }
     });
@@ -375,29 +383,32 @@
         this.options = extend(defaults, options);
     };
     expose.GraphAxis.prototype = extend(new BaseGraph(), {
-        getWidth: function() {
+        getWidth: function () {
+            var width = 0;
             if (this.options.position === 'left') {
-                return defaultLeftGutterAxis;
+                width = defaultLeftGutterAxis;
             } else if (this.options.position === 'right') {
-                return defaultRightGutterAxis;
+                width = defaultRightGutterAxis;
             }
 
-            return 0;
+            return width;
         },
-        getHeight: function() {
+        getHeight: function () {
             return defaultBottomGutterAxis;
         },
         render: function (svg, props) {
 
             var axisScale = d3.scale[this.options.scale]().domain([this.min, this.max]).range([props.height - props.bottomGutter, props.topGutter]),
                 axis = d3.svg.axis().scale(axisScale).orient(this.options.position),
+                labelWidth = this.options.label ? this.options.label.length * 3.5 : 0,
                 translateX = 0,
                 translateY = 0,
                 translateLabelX = 0,
+                translateLabelY = (props.height - props.bottomGutter) / 2 + labelWidth,
                 rotateTextDeg = 270,
                 axisSvg,
-                unique = 'a' + d3.random.normal()().toString().substr(3),
-                labelWidth = this.options.label ? this.options.label.length * 3.5 : 0;
+                unique = 'a' + d3.random.normal()().toString().substr(3);
+
 
             if (this.options.type === 'date') {
                 axisScale = d3.time.scale().domain([this.min, this.max]).range([props.leftGutter, props.width - props.rightGutter]);
@@ -407,11 +418,9 @@
             if (this.options.position === 'left') {
                 translateX = props.leftGutter;
                 translateLabelX = leftLabelOffset - props.leftGutter;
-                translateLabelY = (props.height - props.bottomGutter) / 2 + labelWidth;
             } else if (this.options.position === 'right') {
                 translateX = props.width - props.rightGutter;
                 translateLabelX = rightLabelOffset;
-                translateLabelY = (props.height - props.bottomGutter) / 2 + labelWidth;
             } else if (this.options.position === 'bottom') {
                 translateX = 0;
                 translateY = props.height - props.bottomGutter;
@@ -465,7 +474,7 @@
         this.options = extend(defaults, options);
     };
     expose.LineAxis.prototype = extend(new BaseGraph(), {
-        getHeight: function() {
+        getHeight: function () {
             return defaultBottomGutterAxis;
         },
         render: function (svg, props) {
@@ -508,10 +517,10 @@
         this.options = extend(defaults, options);
     };
     expose.StackedLineGraph.prototype = extend(new BaseGraph(), {
-        maxYValue: function(data) {
+        maxYValue: function (data) {
 
             var max = 0;
-            data.map(function(d) {
+            data.map(function (d) {
                 max = d3.max([d3.sum(d3.map(d).values()), max]);
             });
 
@@ -519,32 +528,26 @@
         },
         render: function (svg, props) {
 
-            var self = this;
-
-            var x = d3.time.scale()
-                .range([props.leftGutter, props.width - props.rightGutter]);
-
-            var y = d3.scale.linear()
-                .range([props.height - props.bottomGutter, props.topGutter]);
-
-            var color = d3.scale.category20();
-
-            var area = d3.svg.area()
-                .x(function(d, i) { return x(i); })
-                .y0(function(d) { return y(d.y0); })
-                .y1(function(d) { return y(d.y0 + d.y); });
-
-            var stack = d3.layout.stack()
-                .values(function(d) { return d.values; });
+            var self = this,
+                max = 0,
+                values,
+                value,
+                x = d3.time.scale().range([props.leftGutter, props.width - props.rightGutter]),
+                y = d3.scale.linear().range([props.height - props.bottomGutter, props.topGutter]),
+                color = d3.scale.category20(),
+                area = d3.svg.area()
+                    .x(function (d, i) { return x(i); })
+                    .y0(function (d) { return y(d.y0); })
+                    .y1(function (d) { return y(d.y0 + d.y); }),
+                stack = d3.layout.stack()
+                    .values(function (d) { return d.values; });
 
             color.domain(d3.keys(this.data[0]));
 
-            var max = 0;
-
-            var browsers = stack(color.domain().map(function(name) {
+            values = stack(color.domain().map(function (name) {
                 return {
                     name: name,
-                    values: self.data.map(function(d) {
+                    values: self.data.map(function (d) {
                         max = d3.max([d3.sum(d3.map(d).values()), max]);
                         return {y: d[name]};
                     })
@@ -554,26 +557,17 @@
             x.domain([0, this.data.length]);
             y.domain([0, max]);
 
-            var browser = svg.selectAll(".browser")
-                .data(browsers)
+            value = svg.selectAll(".browser")
+                .data(values)
                 .enter().append("g")
                 .attr("class", "browser");
 
-            browser.append("path")
-              .attr("class", "area")
-              .attr("d", function(d) { return area(d.values); })
-              .style("fill", function(d) { return color(d.name); })
-              .append('svg:title')
-                .text(function(d) { return d.name; });
-
-            /*
-            browser.append("text")
-              .datum(function(d) { return {name: d.name, value: d.values[d.values.length - 1]}; })
-              .attr("transform", function(d, i) { return "translate(" + x(i) + "," + y(d.value.y0 + d.value.y / 2) + ")"; })
-              .attr("x", -6)
-              .attr("dy", ".35em")
-              .text(function(d) { return d.name; });
-            */
+            value.append("path")
+                .attr("class", "area")
+                .attr("d", function (d) { return area(d.values); })
+                .style("fill", function (d) { return color(d.name); })
+                .append('svg:title')
+                    .text(function (d) { return d.name; });
 
         }
     });
@@ -664,31 +658,19 @@
 
     expose.BoxPlot = function (data, options) {
         var defaults = {
-            color: '#000',
-            yValue: null,
-            barSeparation: 1,
-            formatNumber: function(n) { return n; }
-        },
-        self = this;
+                color: '#000',
+                yValue: null,
+                barSeparation: 1,
+                formatNumber: function (n) { return n; }
+            },
+            eachValue,
+            self = this;
 
         this.data = data;
         this.options = extend(defaults, options);
-        this.min = Infinity;
-        this.max = -Infinity;
-        this.items = 0;
-
-        d3.map(this.data).forEach(function (key, values) {
-            for (var i in values) {
-                if (values[i] < self.min) {
-                    self.min = values[i];
-                }
-                if (values[i] > self.max) {
-                    self.max = values[i];
-                }
-            }
-
-            self.items += 1;
-        });
+        this.min = d3.min(d3.merge(d3.values(self.data)));
+        this.max = d3.max(d3.merge(d3.values(self.data)));
+        this.items = d3.values(this.data).length;
     };
     expose.BoxPlot.prototype = extend(new BaseGraph(), {
         render: function (svg, props) {
@@ -713,13 +695,11 @@
                     first = d3.quantile(values, 0.25),
                     median = d3.quantile(values, 0.5),
                     third = d3.quantile(values, 0.75),
-                    top = d3.max(values);
-
-                // label
-                var label = svg.append('text')
-                    .text(key)
-                    .attr('x', xscale(i))
-                    .attr('y', yscale(top) - textHeight);
+                    top = d3.max(values),
+                    label = svg.append('text')
+                        .text(key)
+                        .attr('x', xscale(i))
+                        .attr('y', yscale(top) - textHeight);
 
                 label = label[0][0];
                 label.setAttribute('x', label.getAttribute('x') - label.getBBox().width / 2);
@@ -802,7 +782,7 @@
                     .attr('x', xscale(i) + barWidth / 2 + 2)
                     .attr('y', yscale(bottom) + textHeight / 2);
 
-                ++i;
+                i += 1;
             });
 
         }
@@ -821,8 +801,8 @@
         this.options = extend(defaults, options);
     };
     expose.ScatterPlot.prototype = extend(new BaseGraph(), {
-        maxXValue: function(data) {
-            return d3.max(d3.keys(data), function(i) {
+        maxXValue: function (data) {
+            return d3.max(d3.keys(data), function (i) {
                 return parseFloat(i, 10);
             });
         },
@@ -836,7 +816,7 @@
             self.xScale = d3.scale.linear().domain([0, this.maxXValue(this.data)]).range([props.leftGutter, props.width - props.rightGutter]);
             self.yScale = d3.scale.linear().domain([0, this.maxYValue(this.data)]).range([props.height - props.bottomGutter, props.topGutter]);
 
-            if (this.options.element == 'circle') {
+            if (this.options.element === 'circle') {
                 x = 'cx';
                 y = 'cy';
             }
