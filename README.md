@@ -2,7 +2,7 @@
 
 Easy wrappers to help generate lovely graphs with d3 and svg.
 
-See examples: http://mikejestes.github.com/ez-d3-graphs/
+See examples: http://mikejestes.github.io/ez-d3-graphs/
 
 ## Generate new random data
     make clean
