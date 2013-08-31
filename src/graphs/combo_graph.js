@@ -26,6 +26,8 @@
                     .attr("width", this.width + 'px')
                     .attr("height", this.height + 'px');
 
+            this.alter('svg', svg);
+
             svg.append('defs').append('style').text('.popup { font-family: sans-serif; font-size: 10px; }');
 
             if (this.leftAxis) {
@@ -98,5 +100,8 @@
         setOption: function (key, value) {
             this.options[key] = value;
             return this;
+        },
+        alter: function(option, object) {
+
         }
     };

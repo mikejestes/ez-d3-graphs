@@ -58,7 +58,7 @@
     expose.pluck = function (data, field) {
         var result = [];
         d3.map(data).forEach(function (key, value) {
-            result.push(value[field]);
+            result.push(parseFloat(value[field]));
         });
         return result;
     };
@@ -322,6 +322,8 @@
                     .attr("width", this.width + 'px')
                     .attr("height", this.height + 'px');
 
+            this.alter('svg', svg);
+
             svg.append('defs').append('style').text('.popup { font-family: sans-serif; font-size: 10px; }');
 
             if (this.leftAxis) {
@@ -394,8 +396,37 @@
         setOption: function (key, value) {
             this.options[key] = value;
             return this;
+        },
+        alter: function(option, object) {
+
         }
     };
+
+    expose.ResponsiveGraph = expose.ComboGraph;
+
+    expose.ResponsiveGraph.prototype = extend(new expose.ComboGraph(), {
+        alter: function(option, object) {
+            if (option == 'svg') {
+                var ratio = this.width / this.height,
+                    element = d3.select(this.el)[0][0],
+                    oldResize = window.onresize;
+
+                this.width = element.offsetWidth;
+                this.height = element.offsetWidth / ratio;
+
+                object
+                    .attr('width', '100%')
+                    .attr('height', this.height)
+                    .attr('viewBox', '0 0 ' + this.width + ' ' + this.height)
+                    .attr('preserveAspectRatio', "xMidYMin")
+
+                window.onresize = function() {
+                    object.attr('height', element.offsetWidth / ratio);
+                    if (oldResize) oldResize();
+                };
+            }
+        }
+    });
 
     expose.LineGraph = function (data, options) {
         var defaults = {
