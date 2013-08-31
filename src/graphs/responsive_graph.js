@@ -1,5 +1,7 @@
 
-    expose.ResponsiveGraph = expose.ComboGraph;
+    expose.ResponsiveGraph = function (el, width, height, options) {
+        expose.ComboGraph.apply(this, arguments);
+    };
 
     expose.ResponsiveGraph.prototype = extend(new expose.ComboGraph(), {
         alter: function(option, object) {

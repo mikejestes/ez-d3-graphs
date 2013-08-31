@@ -58,7 +58,7 @@
     expose.pluck = function (data, field) {
         var result = [];
         d3.map(data).forEach(function (key, value) {
-            result.push(parseFloat(value[field]));
+            result.push(parseFloat(value[field], 10));
         });
         return result;
     };
@@ -402,7 +402,9 @@
         }
     };
 
-    expose.ResponsiveGraph = expose.ComboGraph;
+    expose.ResponsiveGraph = function (el, width, height, options) {
+        expose.ComboGraph.apply(this, arguments);
+    };
 
     expose.ResponsiveGraph.prototype = extend(new expose.ComboGraph(), {
         alter: function(option, object) {
