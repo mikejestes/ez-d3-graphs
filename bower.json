@@ -3,5 +3,11 @@
   "version": "0.0.0",
   "dependencies": {
     "d3": "~3.2.0"
-  }
+  },
+  "ignore": [
+    "src",
+    ".gitignore",
+    "package.json",
+    "Makefile"
+  ]
 }
