@@ -38,7 +38,7 @@
     expose.pluck = function (data, field) {
         var result = [];
         d3.map(data).forEach(function (key, value) {
-            result.push(value[field]);
+            result.push(parseFloat(value[field]));
         });
         return result;
     };
