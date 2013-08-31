@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>EZ D3 Graphs - Responive Example</title>
+<meta charset="utf-8">
+<style>
+body, h1, p, a {
+    margin: 0;
+    padding: 0;
+}
+body {
+    background-color: #ccc;
+    font-family: sans-serif;
+}
+h1 {
+    padding: 20px 10px;
+}
+p {
+    margin: 0 10px;
+}
+.row {
+    width: 80%;
+    margin: 0 auto;
+    background-color: #ddd;
+}
+.column {
+    vertical-align: top;
+    width: 450px;
+    margin: 0 10px;
+    display: inline-block;
+}
+</style>
+</head>
+<body>
+
+<a href="https://github.com/mikejestes/ez-d3-graphs"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png" alt="Fork me on GitHub"></a>
+
+<div class="row">
+
+    <h1>Responsive D3 Graphs</h1>
+    <p><a href="../">&laquo; Back</a></p>
+
+    <div>
+
+        <h2>Basic Bar Graph</h2>
+        <div id="bar" ></div>
+
+        <h2>Basic Line Graph</h2>
+        <div id="line" ></div>
+
+    </div>
+
+</div>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="../../ez-d3-graphs/ez-d3-graphs.js"></script><!-- local dev hack -->
+<script>window.ezD3Graphs || document.write('<script src="../ez-d3-graphs.js"><'+'/script>')
+</script>
+<script src="responsive-graphs.js"></script>
+
+</body>
+</html>

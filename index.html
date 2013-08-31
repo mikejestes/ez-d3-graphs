@@ -38,7 +38,7 @@ p {
 <div class="row">
 
     <h1>Easy D3 Graphs</h1>
-    <p>A helper library to create svg graphs using the <a href="http://d3js.org/">d3 javascript library</a>.</p>
+    <p>A helper library to create svg graphs using the <a href="http://d3js.org/">d3 javascript library</a>. <a href="responsive/">Responsive Demo</a></p>
 
     <div class="column">
 
@@ -84,8 +84,9 @@ p {
 </div>
 
 <script src="http://d3js.org/d3.v3.min.js"></script>
-<!-- <script src="https://raw.github.com/mikejestes/ez-d3-graphs/master/ez-d3-graphs.js"></script> -->
-<script src="ez-d3-graphs.js"></script>
+<script src="../ez-d3-graphs/ez-d3-graphs.js"></script><!-- local dev hack -->
+<script>window.ezD3Graphs || document.write('<script src="ez-d3-graphs.js"><'+'/script>')
+</script>
 <script src="graphs.js"></script>
 
 </body>
