@@ -1,6 +1,6 @@
 {
   "name": "ez-d3-graphs",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "dependencies": {
     "d3": "~3.3.0"
   },
