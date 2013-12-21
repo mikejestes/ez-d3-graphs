@@ -19,10 +19,14 @@
     expose.GraphAxis.prototype = extend(new BaseGraph(), {
         getWidth: function () {
             var width = 0;
+            var max = this.max;
             if (this.options.position === 'left') {
-                width = defaultLeftGutterAxis;
+                if (this.options.tickFormat) {
+                    max = this.options.tickFormat(max);
+                }
+                width = 30 + max.toString().length * 8;
             } else if (this.options.position === 'right') {
-                width = defaultRightGutterAxis;
+                width = this.max.toString().length * 8;
             }
 
             return width;
@@ -51,10 +55,10 @@
 
             if (this.options.position === 'left') {
                 translateX = props.leftGutter;
-                translateLabelX = leftLabelOffset - props.leftGutter;
+                translateLabelX = 20 - props.leftGutter;
             } else if (this.options.position === 'right') {
                 translateX = props.width - props.rightGutter;
-                translateLabelX = rightLabelOffset;
+                translateLabelX = props.rightGutter;
             } else if (this.options.position === 'bottom') {
                 translateX = 0;
                 translateY = props.height - props.bottomGutter;

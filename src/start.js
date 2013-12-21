@@ -11,10 +11,6 @@
     var expose = {},
         rad2deg = 180 / Math.PI,
         globalTickRatio = 25,
-        defaultLeftGutterAxis = 45,
-        defaultRightGutterAxis = 60,
         defaultBottomGutterAxis = 20,
-        leftLabelOffset = 15,
-        rightLabelOffset = 55,
         BaseGraph = function () {};
 
