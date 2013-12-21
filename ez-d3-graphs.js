@@ -765,13 +765,14 @@
         getWidth: function () {
             var width = 0;
             var max = this.max;
+            if (this.options.tickFormat) {
+                max = this.options.tickFormat(max);
+            }
+
             if (this.options.position === 'left') {
-                if (this.options.tickFormat) {
-                    max = this.options.tickFormat(max);
-                }
                 width = 30 + max.toString().length * 8;
             } else if (this.options.position === 'right') {
-                width = this.max.toString().length * 8;
+                width = 10 + max.toString().length * 7.5;
             }
 
             return width;
