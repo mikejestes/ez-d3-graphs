@@ -5,6 +5,8 @@
             axisColor: '#000',
             labelColor: '#000',
             tickColor: '#000',
+            labelOffsetX: 0,
+            labelOffsetY: 0,
             label: null,
             ticks: null,
             scale: 'linear',
@@ -97,7 +99,7 @@
                 axisSvg.append('text')
                     .text(this.options.label)
                     .attr('style', 'fill:' + this.options.labelColor)
-                    .attr('transform', 'translate(' + translateLabelX + ',' + translateLabelY + ')rotate(' + rotateTextDeg + ')');
+                    .attr('transform', 'translate(' + parseInt(translateLabelX + this.options.labelOffsetX) + ',' + parseInt(translateLabelY + this.options.labelOffsetY) + ')rotate(' + rotateTextDeg + ')');
             }
 
         }
